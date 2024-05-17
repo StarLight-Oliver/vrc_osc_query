@@ -21,6 +21,12 @@ type VRCOSCService struct {
 	oscD     *osc.StandardDispatcher
 }
 
+const (
+	OscTypeInt   = 1
+	OscTypeFloat = 2
+	OscTypeBool  = 3
+)
+
 func IsPortInUse(port int, netType string) bool {
 
 	if netType == "" {
