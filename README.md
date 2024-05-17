@@ -48,4 +48,7 @@ func main() {
 		log.Fatal(err)
 	}
 }
+## Run the tests
+```shell
+go test ./...
 ```

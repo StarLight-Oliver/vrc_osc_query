@@ -51,7 +51,12 @@ const (
 func (node *OscNode) AddChild(fullpath string, value int, desc string) *OscNode {
 	folderPath, fileName := filepath.Split(fullpath)
 
-	if folderPath[0:len(folderPath)-1] == node.FullPath {
+	folderPathLen := len(folderPath) - 1
+	if folderPathLen == 0 {
+		folderPathLen = 1
+	}
+
+	if folderPath[0:folderPathLen] == node.FullPath {
 
 		osc_node := OscNode{
 			Description: desc,

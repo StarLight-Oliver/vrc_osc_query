@@ -15,13 +15,13 @@ import (
 )
 
 type VRCOSCService struct {
-	osc_port  int
-	osc_tree  *osc_query.OscNode
-	http_port int
-	oscD      *osc.StandardDispatcher
+	OscPort  int
+	OscTree  *osc_query.OscNode
+	HttpPort int
+	oscD     *osc.StandardDispatcher
 }
 
-func isPortInUse(port int, netType string) bool {
+func IsPortInUse(port int, netType string) bool {
 
 	if netType == "" {
 		netType = "tcp"
@@ -29,13 +29,14 @@ func isPortInUse(port int, netType string) bool {
 
 	l, err := net.Listen(netType, fmt.Sprintf("localhost:%d", port))
 	if err != nil {
+		fmt.Println(err)
 		return true
 	}
 	defer l.Close()
 	return false
 }
 
-func getFreeTCPPort() (port int, err error) {
+func GetFreeTCPPort() (port int, err error) {
 	var a *net.TCPAddr
 	if a, err = net.ResolveTCPAddr("tcp", "localhost:0"); err == nil {
 		var l *net.TCPListener
@@ -47,7 +48,7 @@ func getFreeTCPPort() (port int, err error) {
 	return
 }
 
-func getFreeUDPPort() (port int, err error) {
+func GetFreeUDPPort() (port int, err error) {
 	var a *net.UDPAddr
 	if a, err = net.ResolveUDPAddr("udp", "localhost:0"); err == nil {
 		var l *net.UDPConn
@@ -62,21 +63,21 @@ func getFreeUDPPort() (port int, err error) {
 func NewVRCOSCService(name string, oscport int) (*VRCOSCService, error) {
 
 	if oscport == 0 {
-		newOscport, err := getFreeUDPPort()
+		newOscport, err := GetFreeUDPPort()
 		if err != nil {
 			return nil, err
 		}
 		oscport = newOscport
 	}
 
-	osc_tree := osc_query.NewOscNodeTree(name, "127.0.0.1", oscport)
+	OscTree := osc_query.NewOscNodeTree(name, "127.0.0.1", oscport)
 
 	httpPort := oscport
 
 	// see if the tcp port is already in use
-	if isPortInUse(oscport, "tcp") {
+	if IsPortInUse(oscport, "tcp") {
 		// find a free port
-		tHttpPort, err := getFreeTCPPort()
+		tHttpPort, err := GetFreeTCPPort()
 		if err != nil {
 			return nil, err
 		}
@@ -84,15 +85,15 @@ func NewVRCOSCService(name string, oscport int) (*VRCOSCService, error) {
 	}
 
 	return &VRCOSCService{
-		osc_port:  oscport,
-		osc_tree:  osc_tree,
-		http_port: httpPort,
-		oscD:      osc.NewStandardDispatcher(),
+		OscPort:  oscport,
+		OscTree:  OscTree,
+		HttpPort: httpPort,
+		oscD:     osc.NewStandardDispatcher(),
 	}, nil
 }
 
 func (osc_service *VRCOSCService) ListenAndServe() error {
-	osc_tree := osc_service.osc_tree
+	OscTree := osc_service.OscTree
 
 	r := http.NewServeMux()
 
@@ -101,8 +102,8 @@ func (osc_service *VRCOSCService) ListenAndServe() error {
 		return hostErr
 	}
 
-	server, err := zeroconf.RegisterProxy(osc_tree.HostInfo.Name, "_oscjson._tcp", "local.", osc_service.http_port, hostName, []string{"127.0.0.1"}, []string{"txtver=1"}, nil)
-	server2, err2 := zeroconf.RegisterProxy(osc_tree.HostInfo.Name, "_osc._udp", "local.", osc_service.osc_port, hostName, []string{"127.0.0.1"}, []string{"txtvers=1"}, nil)
+	server, err := zeroconf.RegisterProxy(OscTree.HostInfo.Name, "_oscjson._tcp", "local.", osc_service.HttpPort, hostName, []string{"127.0.0.1"}, []string{"txtver=1"}, nil)
+	server2, err2 := zeroconf.RegisterProxy(OscTree.HostInfo.Name, "_osc._udp", "local.", osc_service.OscPort, hostName, []string{"127.0.0.1"}, []string{"txtvers=1"}, nil)
 	if err != nil {
 		return err
 	}
@@ -118,7 +119,7 @@ func (osc_service *VRCOSCService) ListenAndServe() error {
 		w.Header().Set("Content-Type", "application/json")
 
 		if _, ok := r.URL.Query()["HOST_INFO"]; ok {
-			host_info := osc_tree.HostInfo
+			host_info := OscTree.HostInfo
 			host_info_json, err := json.Marshal(host_info)
 			if err != nil {
 				fmt.Println(err)
@@ -127,7 +128,7 @@ func (osc_service *VRCOSCService) ListenAndServe() error {
 			return
 		}
 
-		json_string, err := json.Marshal(osc_tree)
+		json_string, err := json.Marshal(OscTree)
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -141,7 +142,7 @@ func (osc_service *VRCOSCService) ListenAndServe() error {
 	sig := make(chan os.Signal, 1)
 	errSignal := make(chan error, 1)
 	go func() {
-		err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", osc_service.http_port), r)
+		err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", osc_service.HttpPort), r)
 		if err != nil {
 			errSignal <- err
 		}
@@ -150,7 +151,7 @@ func (osc_service *VRCOSCService) ListenAndServe() error {
 
 	go func() {
 		server := &osc.Server{
-			Addr:       fmt.Sprintf("127.0.0.1:%d", osc_service.osc_port),
+			Addr:       fmt.Sprintf("127.0.0.1:%d", osc_service.OscPort),
 			Dispatcher: osc_service.oscD,
 		}
 
@@ -179,7 +180,7 @@ func (osc_service *VRCOSCService) ListenAndServe() error {
 type Message osc.Message
 
 func (osc_service *VRCOSCService) AddHandler(fullpath string, value int, desc string, method func(*Message)) {
-	osc_service.osc_tree.AddChild(fullpath, value, desc)
+	osc_service.OscTree.AddChild(fullpath, value, desc)
 	osc_service.oscD.AddMsgHandler(fullpath, func(msg *osc.Message) {
 
 		message := Message{
