@@ -1,7 +1,6 @@
 package osc_query
 
 import (
-	"fmt"
 	"path/filepath"
 )
 
@@ -22,12 +21,7 @@ type HostInfo struct {
 	Transport  string          `json:"TRANSPORT"`
 }
 
-// f = float
-// i = int
-// T = boolean
-
 func NewOscNodeTree(applicationName, host string, port int) *OscNode {
-	// add the access extension to the host info
 
 	node := OscNode{
 		Description: "root node",
@@ -55,9 +49,7 @@ const (
 )
 
 func (node *OscNode) AddChild(fullpath string, value int, desc string) *OscNode {
-	fmt.Println("fullpath", fullpath, "value", value, "node path", node.FullPath)
 	folderPath, fileName := filepath.Split(fullpath)
-	fmt.Println("folderPath", folderPath, "fullpath", node.FullPath)
 
 	if folderPath[0:len(folderPath)-1] == node.FullPath {
 
