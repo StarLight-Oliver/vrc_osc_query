@@ -22,9 +22,10 @@ type VRCOSCService struct {
 }
 
 const (
-	OscTypeInt   = 1
-	OscTypeFloat = 2
-	OscTypeBool  = 3
+	OscTypeInt    = 1
+	OscTypeFloat  = 2
+	OscTypeBool   = 3
+	OscTypeString = 4
 )
 
 func IsPortInUse(port int, netType string) bool {

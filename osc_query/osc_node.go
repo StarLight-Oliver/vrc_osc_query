@@ -43,9 +43,10 @@ func NewOscNodeTree(applicationName, host string, port int) *OscNode {
 }
 
 const (
-	OscTypeInt   = 1
-	OscTypeFloat = 2
-	OscTypeBool  = 3
+	OscTypeInt    = 1
+	OscTypeFloat  = 2
+	OscTypeBool   = 3
+	OscTypeString = 4
 )
 
 func (node *OscNode) AddChild(fullpath string, value int, desc string) *OscNode {
@@ -70,6 +71,8 @@ func (node *OscNode) AddChild(fullpath string, value int, desc string) *OscNode 
 			osc_node.Type = "f"
 		} else if value == OscTypeBool {
 			osc_node.Type = "T"
+		} else if value == OscTypeString {
+			osc_node.Type = "s"
 		}
 		osc_node.Access = 3
 
